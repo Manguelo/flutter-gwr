@@ -41,6 +41,8 @@ abstract class _StreamStore with Store {
     player.initialize();
     isPlaying = true;
     setNotifications(artist, title);
+
+    // Listen for events
     player.off('status', (eventname, {args}) => null);
     player.on(
       'status',
@@ -82,7 +84,7 @@ abstract class _StreamStore with Store {
 
   @action
   Future<void> setNotifications(String ablum, String title) async {
-    if (isBusy && !isPlaying) {
+    if (isBusy) {
       return;
     }
 
@@ -95,13 +97,18 @@ abstract class _StreamStore with Store {
               isStream: true,
               albumArt:
                   'https://godswayradio.com/wp-content/uploads/2015/06/miami_skyline-wallpaper-1920x1440-5.jpg',
-              album: ablum,
+              album: '104.7 WAYG',
               artist: "",
               assetUrl: 'http://ic2.christiannetcast.com/wayg-fm',
-              title: title),
+              title: 'God\'s Way Radio'),
         ],
         options: new PlaylistItemOptions(startPaused: false),
       );
+
+      // If user pauses while loading
+      if (!isPlaying) {
+        pause();
+      }
     } catch (ex) {
       Logger().e(ex);
     } finally {
