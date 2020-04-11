@@ -69,13 +69,7 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
               child: Image.asset(
                 'assets/radio_logo_info.png',
               ),
-            ).paddingOnly(left: imagePadding, right: imagePadding, top: 40),
-            Text(
-              'Calvary Chapel Miami',
-              textAlign: TextAlign.center,
-              style:
-                  TextStyle(color: primaryColor, fontWeight: FontWeight.w300),
-            ).paddingOnly(bottom: 25),
+            ).paddingFromLTRB(imagePadding, 40, imagePadding, 25),
             AudioControl(),
             Observer(
               builder: (_) {

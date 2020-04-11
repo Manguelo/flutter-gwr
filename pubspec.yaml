@@ -21,6 +21,7 @@ dependencies:
     sdk: flutter
   flutter_mobx:
   mobx:
+  data_connection_checker:
   logger: ^0.6.0
   flutter_spinkit:
   flutter_plugin_playlist:

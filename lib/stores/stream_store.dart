@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:flutter_gwr/stores/root_store.dart';
 import 'package:flutter_plugin_playlist/flutter_plugin_playlist.dart';
 import 'package:logger/logger.dart';
@@ -34,7 +35,15 @@ abstract class _StreamStore with Store {
   @observable
   String artist = '104.7 WAYG';
 
+  int retryCount = 0;
+
   Timer timer;
+
+  // Track is invalid or is loading and user pressed play
+  bool isLoading(dynamic args) =>
+      args?.value['status'] == 'loading' &&
+      isPlaying &&
+      !(timer?.isActive ?? false);
 
   @action
   Future<void> initialize() async {
@@ -47,14 +56,26 @@ abstract class _StreamStore with Store {
     player.on(
       'status',
       (eventname, {args}) async {
-        if (args?.value['status'] == 'paused' && isPlaying && !isBusy) {
+        final connection = await checkConnection();
+        if (!connection.isSuccess && player.isPlaying) {
+          startTimer();
+          // Invalid track or is loading
+        } else if (isLoading(args)) {
           title = 'Loading...';
           artist = '104.7 WAYG';
           startTimer();
+          // Is playing
         } else if (args?.value['status'] == 'playing') {
           title = 'God\'s Way Radio';
           artist = '104.7 WAYG';
-          stopTimer();
+          if (!isPlaying) {
+            startTimer();
+          } else {
+            stopTimer();
+          }
+          // Is paused and user pressed play
+        } else if (args?.value['status'] == 'paused' && isPlaying) {
+          startTimer();
         }
       },
     );
@@ -76,6 +97,7 @@ abstract class _StreamStore with Store {
   Future<void> pause() async {
     try {
       isPlaying = false;
+      stopTimer();
       player.pause();
     } catch (ex) {
       Logger().e(ex);
@@ -104,11 +126,6 @@ abstract class _StreamStore with Store {
         ],
         options: new PlaylistItemOptions(startPaused: false),
       );
-
-      // If user pauses while loading
-      if (!isPlaying) {
-        pause();
-      }
     } catch (ex) {
       Logger().e(ex);
     } finally {
@@ -125,14 +142,41 @@ abstract class _StreamStore with Store {
     VolumeWatcher.setVolume(vol);
   }
 
-  void startTimer() {
+  Future<void> startTimer({int seconds = 5}) async {
+    var hasConnection = await checkConnection();
     if (!(timer?.isActive ?? false))
-      timer = Timer.periodic(Duration(seconds: 3), (t) {
-        setNotifications(artist, title);
+      timer = Timer.periodic(Duration(seconds: seconds), (t) async {
+        // Connection is poor or connection was poor
+        if (!hasConnection.isSuccess || title == 'Loading...') {
+          title = 'Loading...';
+          artist = 'Poor network connection';
+          isPlaying = true;
+          setNotifications(artist, title);
+
+          if (retryCount >= 3) {
+            timer.cancel();
+            startTimer(seconds: 15);
+          }
+          retryCount += 1;
+        }
+        hasConnection = await checkConnection();
       });
+  }
+
+  Future<AddressCheckResult> checkConnection() async {
+    return await DataConnectionChecker().isHostReachable(
+      AddressCheckOptions(
+        InternetAddress('1.1.1.1'),
+        port: 53,
+        timeout: Duration(seconds: 1),
+      ),
+    );
   }
 
   void stopTimer() {
     timer.cancel();
+    title = 'God\'s Way Radio';
+    artist = '104.7 WAYG';
+    retryCount = 0;
   }
 }

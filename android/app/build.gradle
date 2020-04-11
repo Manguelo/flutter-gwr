@@ -43,6 +43,7 @@ android {
     }
 
     defaultConfig {
+        versionCode 4
         applicationId "com.wayg.GodsWayRadio_Droid"
         minSdkVersion 23
         targetSdkVersion 29
