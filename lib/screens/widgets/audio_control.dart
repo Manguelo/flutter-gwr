@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gwr/app_config.dart';
 import 'package:flutter_gwr/extensions/padding_extensions.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 
 class AudioControl extends StatelessWidget {
   const AudioControl();
@@ -12,9 +11,12 @@ class AudioControl extends StatelessWidget {
     final store = AppConfig.of(context).rootStore.streamStore;
     final primaryColor = Theme.of(context).primaryColor;
 
-    return Observer(
-      builder: (_) {
-        final isPlaying = store.isPlaying;
+    return StreamBuilder<Object>(
+      stream: store.player.isPlaying,
+      builder: (context, snap) {
+        final isPlaying = snap?.data ?? false;
+        store.isPlaying = isPlaying;
+
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
@@ -24,7 +26,7 @@ class AudioControl extends StatelessWidget {
                 Icons.play_circle_outline,
                 color: isPlaying ? primaryColor.withAlpha(50) : primaryColor,
               ),
-              onPressed: () => store.play(),
+              onPressed: isPlaying ? null : () => store.play(),
             ).paddingOnly(right: 5),
             IconButton(
               iconSize: 50,
@@ -32,7 +34,7 @@ class AudioControl extends StatelessWidget {
                 Icons.pause_circle_outline,
                 color: !isPlaying ? primaryColor.withAlpha(50) : primaryColor,
               ),
-              onPressed: () => store.pause(),
+              onPressed: !isPlaying ? null : () => store.pause(),
             ).paddingOnly(right: 5)
           ],
         );

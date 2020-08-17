@@ -1,3 +1,4 @@
+import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,6 +28,9 @@ class MainAppState extends State<MyApp> implements WidgetsBindingObserver {
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
+    AssetsAudioPlayer.setupNotificationsOpenAction((notification) {
+      return true;
+    });
     super.initState();
   }
 
@@ -48,16 +52,11 @@ class MainAppState extends State<MyApp> implements WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
-    final store = AppConfig.of(context).rootStore.streamStore;
     switch (state) {
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
         break;
       case AppLifecycleState.resumed:
-        final connection = await store.checkConnection();
-        if (connection.isSuccess) {
-          store.isPlaying = store.player.isPlaying;
-        }
         break;
       default:
         break;

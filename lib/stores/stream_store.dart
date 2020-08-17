@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:flutter_gwr/stores/root_store.dart';
-import 'package:flutter_plugin_playlist/flutter_plugin_playlist.dart';
 import 'package:logger/logger.dart';
 import 'package:mobx/mobx.dart';
 import 'package:volume_watcher/volume_watcher.dart';
@@ -21,13 +21,10 @@ abstract class _StreamStore with Store {
   bool isPlaying = false;
 
   @observable
-  bool isBusy = false;
+  AssetsAudioPlayer player = AssetsAudioPlayer();
 
   @observable
-  RmxAudioPlayer player = new RmxAudioPlayer();
-
-  @observable
-  double volume = 0.5;
+  double volume = 50;
 
   @observable
   String title = 'God\'s Way Radio';
@@ -37,55 +34,36 @@ abstract class _StreamStore with Store {
 
   int retryCount = 0;
 
-  Timer timer;
-
-  // Track is invalid or is loading and user pressed play
-  bool isLoading(dynamic args) =>
-      args?.value['status'] == 'loading' &&
-      isPlaying &&
-      !(timer?.isActive ?? false);
-
   @action
   Future<void> initialize() async {
-    player.initialize();
-    isPlaying = true;
-    setNotifications(artist, title);
+    final maxVol = await VolumeWatcher.getMaxVolume;
+    await VolumeWatcher.setVolume(maxVol.toDouble());
 
-    // Listen for events
-    player.off('status', (eventname, {args}) => null);
-    player.on(
-      'status',
-      (eventname, {args}) async {
-        final connection = await checkConnection();
-        if (!connection.isSuccess && player.isPlaying) {
-          startTimer();
-          // Invalid track or is loading
-        } else if (isLoading(args)) {
-          title = 'Loading...';
-          artist = '104.7 WAYG';
-          startTimer();
-          // Is playing
-        } else if (args?.value['status'] == 'playing') {
-          title = 'God\'s Way Radio';
-          artist = '104.7 WAYG';
-          if (!isPlaying) {
-            startTimer();
-          } else {
-            stopTimer();
-          }
-          // Is paused and user pressed play
-        } else if (args?.value['status'] == 'paused' && isPlaying) {
-          startTimer();
-        }
-      },
+    player.open(
+      Audio.liveStream(
+        'http://ic2.christiannetcast.com/wayg-fm',
+        metas: Metas(
+          id: 'gwr',
+          title: 'God\'s Way Radio',
+          artist: '104.7 WAYG',
+          image: MetasImage.network(
+              'https://godswayradio.com/wp-content/uploads/2015/06/miami_skyline-wallpaper-1920x1440-5.jpg'),
+        ),
+      ),
+      showNotification: true,
+      volume: 0.5,
     );
+
+    isPlaying = true;
   }
 
   @action
   Future<void> play() async {
+    if (isPlaying) {
+      return;
+    }
     try {
       isPlaying = true;
-      setNotifications(artist, title);
       player.play();
     } catch (ex) {
       Logger().e(ex);
@@ -98,69 +76,10 @@ abstract class _StreamStore with Store {
     try {
       isPlaying = false;
       stopTimer();
-      player.pause();
+      player.stop();
     } catch (ex) {
       Logger().e(ex);
     }
-  }
-
-  @action
-  Future<void> setNotifications(String ablum, String title) async {
-    if (isBusy) {
-      return;
-    }
-
-    isBusy = true;
-    try {
-      await player.setPlaylistItems(
-        [
-          new AudioTrack(
-              trackId: 'gods_way_radio_104.7',
-              isStream: true,
-              albumArt:
-                  'https://godswayradio.com/wp-content/uploads/2015/06/miami_skyline-wallpaper-1920x1440-5.jpg',
-              album: '104.7 WAYG',
-              artist: "",
-              assetUrl: 'http://ic2.christiannetcast.com/wayg-fm',
-              title: 'God\'s Way Radio'),
-        ],
-        options: new PlaylistItemOptions(startPaused: false),
-      );
-    } catch (ex) {
-      Logger().e(ex);
-    } finally {
-      isBusy = false;
-    }
-  }
-
-  @action
-  Future<void> setVolume(double volume) async {
-    this.volume = volume;
-    player.setVolume(1);
-    final maxVol = await VolumeWatcher.getMaxVolume;
-    final vol = (maxVol * volume);
-    VolumeWatcher.setVolume(vol);
-  }
-
-  Future<void> startTimer({int seconds = 5}) async {
-    var hasConnection = await checkConnection();
-    if (!(timer?.isActive ?? false))
-      timer = Timer.periodic(Duration(seconds: seconds), (t) async {
-        // Connection is poor or connection was poor
-        if (!hasConnection.isSuccess || title == 'Loading...') {
-          title = 'Loading...';
-          artist = 'Poor network connection';
-          isPlaying = true;
-          setNotifications(artist, title);
-
-          if (retryCount >= 3) {
-            timer.cancel();
-            startTimer(seconds: 15);
-          }
-          retryCount += 1;
-        }
-        hasConnection = await checkConnection();
-      });
   }
 
   Future<AddressCheckResult> checkConnection() async {
@@ -174,7 +93,6 @@ abstract class _StreamStore with Store {
   }
 
   void stopTimer() {
-    timer.cancel();
     title = 'God\'s Way Radio';
     artist = '104.7 WAYG';
     retryCount = 0;

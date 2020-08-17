@@ -26,34 +26,17 @@ mixin _$StreamStore on _StreamStore, Store {
     }, _$isPlayingAtom, name: '${_$isPlayingAtom.name}_set');
   }
 
-  final _$isBusyAtom = Atom(name: '_StreamStore.isBusy');
-
-  @override
-  bool get isBusy {
-    _$isBusyAtom.context.enforceReadPolicy(_$isBusyAtom);
-    _$isBusyAtom.reportObserved();
-    return super.isBusy;
-  }
-
-  @override
-  set isBusy(bool value) {
-    _$isBusyAtom.context.conditionallyRunInAction(() {
-      super.isBusy = value;
-      _$isBusyAtom.reportChanged();
-    }, _$isBusyAtom, name: '${_$isBusyAtom.name}_set');
-  }
-
   final _$playerAtom = Atom(name: '_StreamStore.player');
 
   @override
-  RmxAudioPlayer get player {
+  AssetsAudioPlayer get player {
     _$playerAtom.context.enforceReadPolicy(_$playerAtom);
     _$playerAtom.reportObserved();
     return super.player;
   }
 
   @override
-  set player(RmxAudioPlayer value) {
+  set player(AssetsAudioPlayer value) {
     _$playerAtom.context.conditionallyRunInAction(() {
       super.player = value;
       _$playerAtom.reportChanged();
@@ -132,25 +115,10 @@ mixin _$StreamStore on _StreamStore, Store {
     return _$pauseAsyncAction.run(() => super.pause());
   }
 
-  final _$setNotificationsAsyncAction = AsyncAction('setNotifications');
-
-  @override
-  Future<void> setNotifications(String ablum, String title) {
-    return _$setNotificationsAsyncAction
-        .run(() => super.setNotifications(ablum, title));
-  }
-
-  final _$setVolumeAsyncAction = AsyncAction('setVolume');
-
-  @override
-  Future<void> setVolume(double volume) {
-    return _$setVolumeAsyncAction.run(() => super.setVolume(volume));
-  }
-
   @override
   String toString() {
     final string =
-        'isPlaying: ${isPlaying.toString()},isBusy: ${isBusy.toString()},player: ${player.toString()},volume: ${volume.toString()},title: ${title.toString()},artist: ${artist.toString()}';
+        'isPlaying: ${isPlaying.toString()},player: ${player.toString()},volume: ${volume.toString()},title: ${title.toString()},artist: ${artist.toString()}';
     return '{$string}';
   }
 }

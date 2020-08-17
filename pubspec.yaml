@@ -24,7 +24,7 @@ dependencies:
   data_connection_checker:
   logger: ^0.6.0
   flutter_spinkit:
-  flutter_plugin_playlist:
+  assets_audio_player:
   flutter_webview_plugin:
   volume_watcher:
   cupertino_icons: ^0.1.2
