@@ -1,4 +1,3 @@
-import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gwr/app_config.dart';
 import 'package:flutter_gwr/extensions/padding_extensions.dart';
@@ -16,12 +15,14 @@ class PlayerPage extends StatefulWidget {
 class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
   StreamStore store;
   SpinKitWave animation;
+  double maxVol;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       store = AppConfig.of(context).rootStore.streamStore;
+      maxVol = (await VolumeWatcher.getMaxVolume).toDouble();
       await store.initialize();
     });
   }
@@ -81,13 +82,18 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
               },
             ).paddingFromLTRB(imagePadding, 40, imagePadding, 25),
             AudioControl(),
-            StreamBuilder<Object>(
-              stream: store.player.volume,
-              builder: (context, snap) {
+            VolumeWatcher(
+              onVolumeChangeListener: (val) {
+                store.volume = val.toDouble() / maxVol.toDouble();
+              },
+            ),
+            Observer(
+              builder: (_) {
                 return Slider(
-                  value: snap?.data ?? 0.5,
-                  onChanged: (val) {
-                    store.player.setVolume(val);
+                  value: store.volume ?? 0.5,
+                  onChanged: (val) async {
+                    store.volume = val;
+                    VolumeWatcher.setVolume(maxVol * val.toDouble());
                   },
                 );
               },

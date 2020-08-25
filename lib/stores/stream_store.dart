@@ -24,7 +24,7 @@ abstract class _StreamStore with Store {
   AssetsAudioPlayer player = AssetsAudioPlayer();
 
   @observable
-  double volume = 50;
+  double volume = 0.5;
 
   @observable
   String title = 'God\'s Way Radio';
@@ -37,7 +37,7 @@ abstract class _StreamStore with Store {
   @action
   Future<void> initialize() async {
     final maxVol = await VolumeWatcher.getMaxVolume;
-    await VolumeWatcher.setVolume(maxVol.toDouble());
+    volume = (await VolumeWatcher.getCurrentVolume) / maxVol;
 
     player.open(
       Audio.liveStream(
@@ -46,12 +46,10 @@ abstract class _StreamStore with Store {
           id: 'gwr',
           title: 'God\'s Way Radio',
           artist: '104.7 WAYG',
-          image: MetasImage.network(
-              'https://godswayradio.com/wp-content/uploads/2015/06/miami_skyline-wallpaper-1920x1440-5.jpg'),
+          image: MetasImage.asset('assets/player_img.jpg'),
         ),
       ),
       showNotification: true,
-      volume: 0.5,
     );
 
     isPlaying = true;

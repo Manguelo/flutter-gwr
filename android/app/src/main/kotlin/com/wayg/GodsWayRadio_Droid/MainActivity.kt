@@ -1,4 +1,4 @@
-package com.example.flutter_gwr
+package com.wayg.GodsWayRadio_Droid
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity

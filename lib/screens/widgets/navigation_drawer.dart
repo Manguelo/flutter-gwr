@@ -23,9 +23,9 @@ class NavigationDrawer extends StatelessWidget {
           DrawerItem(Color(0xff3A5A99), 'assets/Facebook.png', 'Facebook',
               'https://www.facebook.com/GodsWayRadio/'),
           DrawerItem(Color(0xff517EA3), 'assets/Instagram.png', 'Instagram',
-              'https://twitter.com/godswayradio'),
-          DrawerItem(Color(0xff55ACEE), 'assets/Twitter.png', 'Twitter',
               'https://www.instagram.com/godswayradio/?hl=en'),
+          DrawerItem(Color(0xff55ACEE), 'assets/Twitter.png', 'Twitter',
+              'https://twitter.com/godswayradio'),
           if (!Platform.isAndroid)
             DrawerItem(Color(0xffE52D27), 'assets/YouTube.png', 'YouTube',
                 'https://www.youtube.com/channel/UCHRWISEfus-AHDcizhlIUcA'),
@@ -33,7 +33,7 @@ class NavigationDrawer extends StatelessWidget {
             alignment: Alignment.center,
             color: Colors.black26,
             child: Text(
-              '"As for God, Hid way is perfect, the word of the LORD os proven; He is a shield to all those who trust in Him." - Psalm 18:30',
+              '"As for God, His way is perfect, the word of the LORD is proven; He is a shield to all those who trust in Him." - Psalm 18:30',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.black54, fontSize: 16),
             ).paddingOnly(left: 30, right: 30),
